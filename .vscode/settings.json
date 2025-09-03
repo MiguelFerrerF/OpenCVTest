@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "qmainwindow": "cpp",
+        "qlabel": "cpp"
+    },
+    "editor.formatOnSave": true
+}
