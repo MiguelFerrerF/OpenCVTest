@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>422</height>
+    <width>708</width>
+    <height>531</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QLabel" name="imageLabel">
+     <widget class="QLabel" name="videoLabel">
       <property name="text">
        <string/>
       </property>
@@ -38,25 +38,41 @@
         <enum>QLayout::SizeConstraint::SetMaximumSize</enum>
        </property>
        <item>
-        <widget class="QPushButton" name="SelectButton">
-         <property name="autoFillBackground">
-          <bool>true</bool>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
-         <property name="text">
-          <string>Select Image</string>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
          </property>
-         <property name="checkable">
-          <bool>false</bool>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBoxCameras">
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="EraseButton">
+        <widget class="QPushButton" name="startButton">
+         <property name="minimumSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="autoFillBackground">
           <bool>true</bool>
          </property>
          <property name="text">
-          <string>Erase</string>
+          <string>Start OpenCV</string>
          </property>
          <property name="checkable">
           <bool>true</bool>

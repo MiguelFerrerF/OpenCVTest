@@ -1,9 +1,14 @@
 {
     "files.associations": {
+        "*.cpp": "cpp",
         "qmainwindow": "cpp",
         "qlabel": "cpp",
         "qvboxlayout": "cpp",
-        "qpixmap": "cpp"
+        "qpixmap": "cpp",
+        "atomic": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp",
+        "xutility": "cpp"
     },
     "editor.formatOnSave": true
 }

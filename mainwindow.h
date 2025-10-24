@@ -1,16 +1,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QLabel>
 #include <QMainWindow>
-#include <opencv2/opencv.hpp>
+#include <QPixmap>      // Añadir
+#include <QResizeEvent> // Añadir
 
-
-QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
 }
-QT_END_NAMESPACE
+
+class VideoCaptureHandler;
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
@@ -19,12 +18,21 @@ public:
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
+protected:
+  // Detecta cuándo se redimensiona la ventana
+  void resizeEvent(QResizeEvent *event) override;
+
 private slots:
-  void on_SelectButton_clicked();
-  void on_EraseButton_clicked();
+  void on_startButton_clicked();
 
 private:
   Ui::MainWindow *ui;
-  void showImage(const cv::Mat &mat);
+  VideoCaptureHandler *m_videoCaptureHandler;
+
+  // Variable para guardar el frame original sin escalar
+  QPixmap m_currentPixmap;
+
+  // Función helper para dibujar/redibujar la imagen
+  void updateVideoLabel();
 };
 #endif // MAINWINDOW_H
