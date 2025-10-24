@@ -17,8 +17,13 @@ public:
 
   void setCamera(const int cameraId);
 
+  // --- NUEVO ---
+  // Métodos públicos para ser llamados desde MainWindow
+  void setManualFocus(bool manual);
+  void setFocusValue(int value);
+  // --- FIN NUEVO ---
+
 signals:
-  // Se ha modificado la señal para pasar el QPixmap de forma segura
   void newPixmapCaptured(const QPixmap &pixmap);
 
 protected:
@@ -31,6 +36,16 @@ private:
 
   int m_currentCameraId{ID_CAMERA_DEFAULT};
   std::atomic<int> m_requestedCamera{-1};
+
+  // --- NUEVO ---
+  // Variables atómicas para controlar el foco desde la UI
+  std::atomic<bool> m_requestedManualFocus{
+      false};                                 // false = Auto, true = Manual
+  std::atomic<int> m_requestedFocusValue{-1}; // Valor de foco (0-100)
+
+  // Variable para guardar el estado actual del foco
+  bool m_isManualFocus{false};
+  // --- FIN NUEVO ---
 
   QImage cvMatToQImage(const cv::Mat &inMat);
   QPixmap cvMatToQPixmap(const cv::Mat &inMat);
