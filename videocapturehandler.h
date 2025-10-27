@@ -13,13 +13,14 @@
 
 // ... (Struct CameraPropertiesSupport sin cambios) ...
 struct CameraPropertiesSupport {
-  bool brightness;
-  bool contrast;
-  bool saturation;
-  bool hue;
-  bool gain;
-  bool autoExposure;
-  bool exposure;
+  bool autoFocus = false;
+  bool focus = false;
+  bool autoExposure = false;
+  bool exposure = false;
+  bool brightness = false;
+  bool contrast = false;
+  bool saturation = false;
+  bool sharpness = false;
 };
 Q_DECLARE_METATYPE(CameraPropertiesSupport)
 
@@ -31,7 +32,6 @@ public:
 
   // --- MODIFICADO ---
   void requestCameraChange(int cameraId, const QSize &resolution);
-  // --- FIN MODIFICADO ---
 
   // ... (Setters de foco y propiedades sin cambios) ...
   void setManualFocus(bool manual);
@@ -39,8 +39,7 @@ public:
   void setBrightness(int value);
   void setContrast(int value);
   void setSaturation(int value);
-  void setHue(int value);
-  void setGain(int value);
+  void setSharpness(int value);
   void setAutoExposure(bool manual);
   void setExposure(int value);
 
@@ -72,8 +71,7 @@ private:
   std::atomic<int> m_requestedBrightness{-1};
   std::atomic<int> m_requestedContrast{-1};
   std::atomic<int> m_requestedSaturation{-1};
-  std::atomic<int> m_requestedHue{-1};
-  std::atomic<int> m_requestedGain{-1};
+  std::atomic<int> m_requestedSharpness{-1};
   std::atomic<int> m_requestedAutoExposure{-1};
   std::atomic<int> m_requestedExposure{-1};
 

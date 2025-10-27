@@ -1,4 +1,5 @@
 ﻿---
 AlignAfterOpenBracket: AlwaysBreak
+ColumnLimit: 100
 
 ...
