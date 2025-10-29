@@ -81,18 +81,18 @@ void MainWindow::on_startButton_clicked() {
 }
 
 void MainWindow::on_resetButton_clicked() {
-  // Reiniciar todos los controles a sus valores predeterminados
   ui->checkBoxFocoAuto->setChecked(true);
-  on_checkBoxFocoAuto_toggled(true);
   ui->checkBoxExposicionAuto->setChecked(true);
-  on_checkBoxExposicionAuto_toggled(true);
   ui->horizontalSliderBrillo->setValue(50);
-  on_horizontalSliderBrillo_sliderMoved(50);
   ui->horizontalSliderContraste->setValue(50);
-  on_horizontalSliderContraste_sliderMoved(50);
   ui->horizontalSliderSaturacion->setValue(50);
-  on_horizontalSliderSaturacion_sliderMoved(50);
   ui->horizontalSliderNitidez->setValue(50);
+  // Foco y Exposición automáticos
+  on_checkBoxFocoAuto_toggled(true);
+  on_checkBoxExposicionAuto_toggled(true);
+  on_horizontalSliderBrillo_sliderMoved(50);
+  on_horizontalSliderContraste_sliderMoved(50);
+  on_horizontalSliderSaturacion_sliderMoved(50);
   on_horizontalSliderNitidez_sliderMoved(50);
 }
 
@@ -116,39 +116,30 @@ void MainWindow::on_rangesSupported(const CameraPropertyRanges &ranges) {
   // ... (Lógica de configuración de rangos y valores sin cambios) ...
 
   // Brillo
-  ui->horizontalSliderBrillo->setRange(0, 100);
   ui->horizontalSliderBrillo->setValue(
       qBound(0, mapOpenCVToSlider(ranges.brightness.current, ranges.brightness), 100));
 
   // Contraste
-  ui->horizontalSliderContraste->setRange(0, 100);
   ui->horizontalSliderContraste->setValue(
       qBound(0, mapOpenCVToSlider(ranges.contrast.current, ranges.contrast), 100));
 
   // Saturación
-  ui->horizontalSliderSaturacion->setRange(0, 100);
   ui->horizontalSliderSaturacion->setValue(
       qBound(0, mapOpenCVToSlider(ranges.saturation.current, ranges.saturation), 100));
 
   // Nitidez
-  ui->horizontalSliderNitidez->setRange(0, 100);
   ui->horizontalSliderNitidez->setValue(
       qBound(0, mapOpenCVToSlider(ranges.sharpness.current, ranges.sharpness), 100));
 
   // Exposición
-  ui->horizontalSliderExposicionAuto->setRange(0, 100);
-  ui->horizontalSliderExposicionAuto->setValue(
+  ui->horizontalSliderExposicion->setValue(
       qBound(0, mapOpenCVToSlider(ranges.exposure.current, ranges.exposure), 100));
 
   // Foco
-  ui->horizontalSliderFocoAuto->setRange(0, 100);
-  ui->horizontalSliderFocoAuto->setValue(
+  ui->horizontalSliderFoco->setValue(
       qBound(0, mapOpenCVToSlider(ranges.focus.current, ranges.focus), 100));
 
-  // --- NUEVA LÓGICA DE HABILITACIÓN AQUÍ ---
-  // 1. Habilitar/Deshabilitar todos los controles según el soporte real de la cámara.
-  // Usamos m_support, que ya se actualizó en on_propertiesSupported, y que es la información de
-  // si la prop. está disponible.
+  // Habilitar o deshabilitar controles según el soporte
   ui->checkBoxFocoAuto->setEnabled(m_support.autoFocus);
   ui->horizontalSliderBrillo->setEnabled(m_support.brightness);
   ui->horizontalSliderContraste->setEnabled(m_support.contrast);
@@ -156,8 +147,8 @@ void MainWindow::on_rangesSupported(const CameraPropertyRanges &ranges) {
   ui->horizontalSliderNitidez->setEnabled(m_support.sharpness);
   ui->checkBoxExposicionAuto->setEnabled(m_support.autoExposure);
 
-  ui->horizontalSliderFocoAuto->setEnabled(m_support.focus && !ui->checkBoxFocoAuto->isChecked());
-  ui->horizontalSliderExposicionAuto->setEnabled(
+  ui->horizontalSliderFoco->setEnabled(m_support.focus && !ui->checkBoxFocoAuto->isChecked());
+  ui->horizontalSliderExposicion->setEnabled(
       m_support.exposure && !ui->checkBoxExposicionAuto->isChecked());
 }
 // nuevo slot)
@@ -166,15 +157,15 @@ void MainWindow::on_propertiesSupported(CameraPropertiesSupport support) { m_sup
 // Slots de Foco
 void MainWindow::on_checkBoxFocoAuto_toggled(bool checked) {
   m_videoCaptureHandler->setAutoFocus(checked);
-  ui->horizontalSliderFocoAuto->setEnabled(m_support.focus && !checked);
+  ui->horizontalSliderFoco->setEnabled(m_support.focus && !checked);
 }
 
 void MainWindow::on_checkBoxExposicionAuto_toggled(bool checked) {
   m_videoCaptureHandler->setAutoExposure(checked);
-  ui->horizontalSliderExposicionAuto->setEnabled(m_support.exposure && !checked);
+  ui->horizontalSliderExposicion->setEnabled(m_support.exposure && !checked);
 }
 
-void MainWindow::on_horizontalSliderFocoAuto_sliderMoved(int value) {
+void MainWindow::on_horizontalSliderFoco_sliderMoved(int value) {
   int openCVValue = mapSliderToOpenCV(value, m_ranges.focus);
   m_videoCaptureHandler->setFocus(openCVValue);
 }
@@ -199,32 +190,27 @@ void MainWindow::on_horizontalSliderNitidez_sliderMoved(int value) {
   m_videoCaptureHandler->setSharpness(openCVValue);
 }
 
-void MainWindow::on_horizontalSliderExposicionAuto_sliderMoved(int value) {
+void MainWindow::on_horizontalSliderExposicion_sliderMoved(int value) {
   int openCVValue = mapSliderToOpenCV(value, m_ranges.exposure);
   m_videoCaptureHandler->setExposure(openCVValue);
 }
 
 void MainWindow::setAllControlsEnabled(bool enabled) {
-  // Nota: Esta función ya no verifica m_support, solo el estado general 'enabled'.
-  // La habilitación específica de cada control se mueve al slot on_rangesSupported.
   ui->checkBoxFocoAuto->setEnabled(enabled);
-  ui->horizontalSliderFocoAuto->setEnabled(enabled);
+  ui->horizontalSliderFoco->setEnabled(enabled);
   ui->horizontalSliderBrillo->setEnabled(enabled);
   ui->horizontalSliderContraste->setEnabled(enabled);
   ui->horizontalSliderSaturacion->setEnabled(enabled);
   ui->horizontalSliderNitidez->setEnabled(enabled);
   ui->checkBoxExposicionAuto->setEnabled(enabled);
-  ui->horizontalSliderExposicionAuto->setEnabled(enabled);
+  ui->horizontalSliderExposicion->setEnabled(enabled);
 
-  // Aseguramos que los modos automáticos estén activos si la cámara se detiene o se está
-  // inicializando
   if (!enabled) {
     ui->checkBoxExposicionAuto->setChecked(true);
     ui->checkBoxFocoAuto->setChecked(true);
   }
 }
 
-// ... (resizeEvent y updateVideoLabel sin cambios) ...
 void MainWindow::resizeEvent(QResizeEvent *event) {
   QMainWindow::resizeEvent(event);
   updateVideoLabel();
@@ -238,10 +224,8 @@ void MainWindow::updateVideoLabel() {
       ui->videoLabel->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
 }
 
-// Helper para parsear la resolución
 QSize MainWindow::parseResolution(const QString &text) {
   if (text == "Default") {
-    // 0,0 significará "default" para el hilo
     return QSize(0, 0);
   }
   QStringList parts = text.split('x');
@@ -253,10 +237,9 @@ QSize MainWindow::parseResolution(const QString &text) {
       return QSize(w, h);
     }
   }
-  return QSize(0, 0); // Fallback a default
+  return QSize(0, 0);
 }
 
-// --- NUEVO: Helper para mapear valores del Slider (0-100) al rango de OpenCV ---
 int MainWindow::mapSliderToOpenCV(int sliderValue, const PropertyRange &range) {
   // Escala de [0, 100] (slider) a [range.min, range.max] (OpenCV)
   double outputRange = range.max - range.min;
@@ -270,7 +253,6 @@ int MainWindow::mapSliderToOpenCV(int sliderValue, const PropertyRange &range) {
       static_cast<int>(range.min), static_cast<int>(mappedValue), static_cast<int>(range.max));
 }
 
-// --- NUEVO: Helper para mapear valores de OpenCV al rango del Slider (0-100) ---
 int MainWindow::mapOpenCVToSlider(double openCVValue, const PropertyRange &range) {
   // Escala de [range.min, range.max] (OpenCV) a [0, 100] (slider)
   double inputValue = openCVValue - range.min;

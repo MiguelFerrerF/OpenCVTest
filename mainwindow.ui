@@ -50,10 +50,10 @@
        <item row="5" column="1">
         <widget class="QSlider" name="horizontalSliderNitidez">
          <property name="maximum">
-          <number>255</number>
+          <number>100</number>
          </property>
          <property name="value">
-          <number>126</number>
+          <number>50</number>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
@@ -63,10 +63,10 @@
        <item row="3" column="1">
         <widget class="QSlider" name="horizontalSliderSaturacion">
          <property name="maximum">
-          <number>255</number>
+          <number>100</number>
          </property>
          <property name="value">
-          <number>126</number>
+          <number>50</number>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
@@ -96,10 +96,10 @@
        <item row="2" column="1">
         <widget class="QSlider" name="horizontalSliderContraste">
          <property name="maximum">
-          <number>255</number>
+          <number>100</number>
          </property>
          <property name="value">
-          <number>126</number>
+          <number>50</number>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
@@ -130,10 +130,10 @@
        <item row="0" column="1">
         <widget class="QSlider" name="horizontalSliderBrillo">
          <property name="maximum">
-          <number>255</number>
+          <number>100</number>
          </property>
          <property name="value">
-          <number>126</number>
+          <number>50</number>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
@@ -141,9 +141,9 @@
         </widget>
        </item>
        <item row="0" column="4">
-        <widget class="QSlider" name="horizontalSliderExposicionAuto">
+        <widget class="QSlider" name="horizontalSliderExposicion">
          <property name="maximum">
-          <number>255</number>
+          <number>100</number>
          </property>
          <property name="value">
           <number>0</number>
@@ -154,9 +154,9 @@
         </widget>
        </item>
        <item row="2" column="4">
-        <widget class="QSlider" name="horizontalSliderFocoAuto">
+        <widget class="QSlider" name="horizontalSliderFoco">
          <property name="maximum">
-          <number>255</number>
+          <number>100</number>
          </property>
          <property name="orientation">
           <enum>Qt::Orientation::Horizontal</enum>
