@@ -4,17 +4,18 @@
 #include <QImage>
 #include <QMetaType>
 #include <QPixmap>
-#include <QSize> // --- NUEVO ---
+#include <QSize> // --- SIN CAMBIOS ---
 #include <QThread>
 #include <atomic>
 #include <opencv2/opencv.hpp>
 
 #define ID_CAMERA_DEFAULT 0
 
-// ... (Struct CameraPropertiesSupport sin cambios) ...
+// ... (Struct CameraPropertiesSupport sin cambios, excepto por el comentario) ...
+// Estructura para informar qué propiedades de cámara son soportadas (bool)
 struct CameraPropertiesSupport {
   bool autoFocus = false;
-  bool focus = false;
+  bool focus = true;
   bool autoExposure = false;
   bool exposure = false;
   bool brightness = false;
@@ -24,28 +25,51 @@ struct CameraPropertiesSupport {
 };
 Q_DECLARE_METATYPE(CameraPropertiesSupport)
 
+// --- NUEVO: Estructuras para rangos dinámicos de propiedades ---
+struct PropertyRange {
+  double min = 0;
+  double max = 255;
+  double current = 0; // Valor actual o por defecto
+};
+
+struct CameraPropertyRanges {
+  PropertyRange brightness;
+  PropertyRange contrast;
+  PropertyRange saturation;
+  PropertyRange sharpness;
+  PropertyRange focus;
+  PropertyRange exposure;
+};
+Q_DECLARE_METATYPE(CameraPropertyRanges)
+// --- FIN NUEVO ---
+
 class VideoCaptureHandler : public QThread {
   Q_OBJECT
 public:
   VideoCaptureHandler(QObject *parent = nullptr);
   ~VideoCaptureHandler();
 
-  // --- MODIFICADO ---
+  // --- MODIFICADO (SIN CAMBIOS REALES) ---
   void requestCameraChange(int cameraId, const QSize &resolution);
 
   // ... (Setters de foco y propiedades sin cambios) ...
-  void setManualFocus(bool manual);
-  void setFocusValue(int value);
+  void setAutoFocus(bool manual);
+  void setAutoExposure(bool manual);
   void setBrightness(int value);
   void setContrast(int value);
   void setSaturation(int value);
   void setSharpness(int value);
-  void setAutoExposure(bool manual);
+  void setFocus(int value);
   void setExposure(int value);
 
 signals:
   void newPixmapCaptured(const QPixmap &pixmap);
   void propertiesSupported(CameraPropertiesSupport support);
+
+  // --- NUEVO: Señales para rangos y errores ---
+  void rangesSupported(const CameraPropertyRanges &ranges);
+  void cameraOpenFailed(int cameraId, const QString &errorMsg);
+  // --- FIN NUEVO ---
 
 protected:
   void run() override;
@@ -57,26 +81,27 @@ private:
 
   int m_currentCameraId{ID_CAMERA_DEFAULT};
 
-  // --- MODIFICADO ---
   // -2 = No-Op, -1 = Stop, >= 0 = Start
   std::atomic<int> m_requestedCamera{-2};
   std::atomic<int> m_requestedWidth{0};
   std::atomic<int> m_requestedHeight{0};
-  // --- FIN MODIFICADO ---
 
   // ... (Atómicas de foco y propiedades sin cambios) ...
-  std::atomic<bool> m_requestedManualFocus{false};
-  std::atomic<int> m_requestedFocusValue{-1};
-  bool m_isManualFocus{false};
+  std::atomic<int> m_requestedAutoFocus{-1};
+  std::atomic<int> m_requestedFocus{-1};
+  std::atomic<int> m_requestedAutoExposure{-1};
+  std::atomic<int> m_requestedExposure{-1};
   std::atomic<int> m_requestedBrightness{-1};
   std::atomic<int> m_requestedContrast{-1};
   std::atomic<int> m_requestedSaturation{-1};
   std::atomic<int> m_requestedSharpness{-1};
-  std::atomic<int> m_requestedAutoExposure{-1};
-  std::atomic<int> m_requestedExposure{-1};
 
   QImage cvMatToQImage(const cv::Mat &inMat);
   QPixmap cvMatToQPixmap(const cv::Mat &inMat);
+
+  // --- NUEVO: Helper para obtener rangos de propiedades de OpenCV ---
+  PropertyRange getPropertyRange(int propId);
+  // --- FIN NUEVO ---
 };
 
 #endif // VIDEOCAPTUREHANDLER_H

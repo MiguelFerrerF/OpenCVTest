@@ -5,13 +5,13 @@
 #include <QMainWindow>
 #include <QPixmap>
 #include <QResizeEvent>
-#include <QSize> // --- NUEVO ---
+#include <QSize> // --- SIN CAMBIOS ---
 
 class QCheckBox;
 class QSlider;
 class QLabel;
 class QGroupBox;
-class QComboBox; // --- NUEVO ---
+class QComboBox; // --- SIN CAMBIOS ---
 
 namespace Ui {
 class MainWindow;
@@ -31,6 +31,7 @@ protected:
 
 private slots:
   void on_startButton_clicked();
+  void on_resetButton_clicked();
 
   // Slots de Foco
   void on_checkBoxFocoAuto_toggled(bool checked);
@@ -38,6 +39,11 @@ private slots:
 
   // Slot para recibir la info de soporte
   void on_propertiesSupported(CameraPropertiesSupport support);
+
+  // --- NUEVO: Slots para rangos y errores ---
+  void on_rangesSupported(const CameraPropertyRanges &ranges);
+  void on_cameraOpenFailed(int cameraId, const QString &errorMsg);
+  // --- FIN NUEVO ---
 
   // Slots para los nuevos controles
   void on_horizontalSliderBrillo_sliderMoved(int value);
@@ -54,13 +60,16 @@ private:
   QPixmap m_currentPixmap;
 
   CameraPropertiesSupport m_support;
+  CameraPropertyRanges m_ranges;
 
   void updateVideoLabel();
 
   void setAllControlsEnabled(bool enabled);
 
-  // --- NUEVO ---
   // Helper para convertir el texto a QSize
   QSize parseResolution(const QString &text);
+
+  int mapSliderToOpenCV(int sliderValue, const PropertyRange &range);
+  int mapOpenCVToSlider(double openCVValue, const PropertyRange &range);
 };
 #endif // MAINWINDOW_H

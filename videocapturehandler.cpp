@@ -1,37 +1,66 @@
 #include "videocapturehandler.h"
 #include <QDebug>
+#include <QtMath> // Necesario para qFuzzyIsNull en mainwindow.cpp, pero no en este .cpp
 
 VideoCaptureHandler::VideoCaptureHandler(QObject *parent) : QThread(parent) {
   qDebug() << "VideoCaptureHandler::VideoCaptureHandler() - Constructor called.";
   qRegisterMetaType<CameraPropertiesSupport>();
+  // --- NUEVO: Registrar metatipo para los rangos ---
+  qRegisterMetaType<CameraPropertyRanges>();
+  // --- FIN NUEVO ---
 }
 
 VideoCaptureHandler::~VideoCaptureHandler() {}
 
-// --- MODIFICADO ---
 void VideoCaptureHandler::requestCameraChange(int cameraId, const QSize &resolution) {
   m_requestedWidth = resolution.width();
   m_requestedHeight = resolution.height();
   // Se asigna al final, ya que actúa como 'trigger' en el bucle run()
   m_requestedCamera = cameraId;
 }
-// --- FIN MODIFICADO ---
 
 // ... (Setters de foco y propiedades sin cambios) ...
-void VideoCaptureHandler::setManualFocus(bool manual) { m_requestedManualFocus = manual; }
-void VideoCaptureHandler::setFocusValue(int value) { m_requestedFocusValue = value; }
+void VideoCaptureHandler::setAutoFocus(bool manual) {
+  m_requestedAutoFocus = manual ? true : false;
+}
+void VideoCaptureHandler::setAutoExposure(bool manual) {
+  m_requestedAutoExposure = manual ? true : false;
+}
+void VideoCaptureHandler::setFocus(int value) { m_requestedFocus = value; }
 void VideoCaptureHandler::setBrightness(int value) { m_requestedBrightness = value; }
 void VideoCaptureHandler::setContrast(int value) { m_requestedContrast = value; }
 void VideoCaptureHandler::setSaturation(int value) { m_requestedSaturation = value; }
 void VideoCaptureHandler::setSharpness(int value) { m_requestedSharpness = value; }
-void VideoCaptureHandler::setAutoExposure(bool manual) { m_requestedAutoExposure = manual ? 1 : 0; }
+
 void VideoCaptureHandler::setExposure(int value) { m_requestedExposure = value; }
 
-// --- MODIFICADO ---
+// --- MODIFICADO: Implementación corregida del helper para obtener rangos ---
+PropertyRange VideoCaptureHandler::getPropertyRange(int propId) {
+  PropertyRange range;
+
+  // Si la cámara no está abierta, no podemos obtener propiedades.
+  if (!m_VideoCapture.isOpened()) {
+    return range;
+  }
+
+  // 1. Obtener el valor actual de la propiedad, si existe.
+  double currentValue = m_VideoCapture.get(propId);
+  range.current = currentValue;
+  // 2. Intentar obtener los valores mínimo y máximo.
+  range.min = 0;
+  range.max = 255;
+  if (qFuzzyIsNull(range.current)) { // Si el valor actual es esencialmente 0
+    range.current = 126;             // Asumir valor central o por defecto si no se pudo leer
+  }
+
+  return range;
+}
+// --- FIN MODIFICADO ---
+
+// --- MODIFICADO: Lógica de run() con portabilidad, error y rangos ---
 void VideoCaptureHandler::run() {
   while (!isInterruptionRequested()) {
 
-    // --- MODIFICADO: Lógica de petición de cámara ---
     // Atómicamente coge el valor de 'requestedCamera' y lo resetea a -2 (No-Op)
     int requestedCamId = m_requestedCamera.exchange(-2);
 
@@ -49,17 +78,22 @@ void VideoCaptureHandler::run() {
 
         if (!m_VideoCapture.open(requestedCamId, cv::CAP_DSHOW)) {
           qWarning() << "No se pudo abrir la cámara" << requestedCamId;
-        } else {
+          emit cameraOpenFailed(
+              requestedCamId, "Error al abrir la cámara con CAP_ANY y CAP_DSHOW.");
+        }
 
-          // --- NUEVO: Aplicar resolución ANTES de chequear propiedades ---
+        // --- FIN MODIFICADO ---
+
+        if (m_VideoCapture.isOpened()) {
+
+          // Aplicar la resolución solicitada
           if (reqWidth > 0 && reqHeight > 0) {
             m_VideoCapture.set(cv::CAP_PROP_FRAME_WIDTH, reqWidth);
             m_VideoCapture.set(cv::CAP_PROP_FRAME_HEIGHT, reqHeight);
             qDebug() << "Solicitando resolución:" << reqWidth << "x" << reqHeight;
           }
-          // --- FIN NUEVO ---
 
-          // ... (Comprobación de propiedades y reseteo de estados sin cambios)
+          // 1. Comprobación de propiedades y emite qué propiedades son soportadas
           CameraPropertiesSupport support;
           support.brightness = (m_VideoCapture.get(cv::CAP_PROP_BRIGHTNESS) != 0);
           support.contrast = (m_VideoCapture.get(cv::CAP_PROP_CONTRAST) != 0);
@@ -67,12 +101,30 @@ void VideoCaptureHandler::run() {
           support.sharpness = (m_VideoCapture.get(cv::CAP_PROP_SHARPNESS) != 0);
           support.autoExposure = (m_VideoCapture.get(cv::CAP_PROP_AUTO_EXPOSURE) != 0);
           support.exposure = (m_VideoCapture.get(cv::CAP_PROP_EXPOSURE) != 0);
+          support.autoFocus = (m_VideoCapture.get(cv::CAP_PROP_AUTOFOCUS) != 0);
+          support.focus = (m_VideoCapture.get(cv::CAP_PROP_FOCUS) == 0);
+          // --- FIN CORRECCIÓN ---
+
+          qDebug() << "CameraPropertiesSupport - autoFocus:" << support.autoFocus
+                   << "\nfocus:" << support.focus << "\nautoExposure:" << support.autoExposure
+                   << "\nexposure:" << support.exposure << "\nbrightness:" << support.brightness
+                   << "\ncontrast:" << support.contrast << "\nsaturation:" << support.saturation
+                   << "\nsharpness:" << support.sharpness;
+
           emit propertiesSupported(support);
 
-          m_VideoCapture.set(cv::CAP_PROP_AUTOFOCUS, 1);
-          m_isManualFocus = false;
-          m_requestedManualFocus = false;
-          m_requestedFocusValue = -1;
+          // 2. Recopilar y emitir rangos de propiedades
+          CameraPropertyRanges ranges;
+          ranges.brightness = getPropertyRange(cv::CAP_PROP_BRIGHTNESS);
+          ranges.contrast = getPropertyRange(cv::CAP_PROP_CONTRAST);
+          ranges.saturation = getPropertyRange(cv::CAP_PROP_SATURATION);
+          ranges.sharpness = getPropertyRange(cv::CAP_PROP_SHARPNESS);
+          ranges.exposure = getPropertyRange(cv::CAP_PROP_EXPOSURE);
+          ranges.focus = getPropertyRange(cv::CAP_PROP_FOCUS);
+          emit rangesSupported(ranges);
+
+          m_requestedAutoFocus = -1;
+          m_requestedFocus = -1;
           m_requestedBrightness = -1;
           m_requestedContrast = -1;
           m_requestedSaturation = -1;
@@ -111,17 +163,12 @@ void VideoCaptureHandler::run() {
       reqValue = m_requestedExposure.exchange(-1);
       if (reqValue != -1)
         m_VideoCapture.set(cv::CAP_PROP_EXPOSURE, reqValue);
-      bool requestedManual = m_requestedManualFocus.load();
-      if (requestedManual != m_isManualFocus) {
-        m_VideoCapture.set(cv::CAP_PROP_AUTOFOCUS, requestedManual ? 0 : 1);
-        m_isManualFocus = requestedManual;
-      }
-      int requestedFocusValue = m_requestedFocusValue.exchange(-1);
-      if (m_isManualFocus && requestedFocusValue != -1) {
-        int focusVal = static_cast<int>(requestedFocusValue * 2.55);
-        m_VideoCapture.set(cv::CAP_PROP_FOCUS, focusVal);
-      }
-      // --- FIN ZONA SIN CAMBIOS ---
+      reqValue = m_requestedAutoFocus.exchange(-1);
+      if (reqValue != -1)
+        m_VideoCapture.set(cv::CAP_PROP_AUTOFOCUS, reqValue);
+      reqValue = m_requestedFocus.exchange(-1);
+      if (reqValue != -1)
+        m_VideoCapture.set(cv::CAP_PROP_FOCUS, reqValue);
 
       m_VideoCapture >> m_frame;
       if (!m_frame.empty()) {
